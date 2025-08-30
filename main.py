@@ -19,8 +19,6 @@ for df, cols in [(yields, ["ts_start","ts_end"]), (events, ["ts_start","ts_end"]
     elif df is events: events = df
     elif df is median_ref: median_ref = df
 
-from pyspark.sql import functions as F
-
 y = yields.alias("y")
 s = static_info.alias("s")
 e = events.alias("e")
