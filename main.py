@@ -2,10 +2,10 @@ from pyspark.sql import SparkSession, functions as F, types as T
 
 spark = SparkSession.builder.appName("SolarKPI").getOrCreate()
 
-yields = (spark.read.option("header", True).csv("/inverter_yields.csv", inferSchema=True))
-static_info = (spark.read.option("header", True).csv("/static_inverter_info.csv", inferSchema=True))
-events = (spark.read.option("header", True).csv("/sldc_events.csv", inferSchema=True))
-median_ref = (spark.read.option("header", True).csv("/site_median_reference.csv", inferSchema=True))
+yields = (spark.read.option("header", True).csv("/CSVs/inverter_yields.csv", inferSchema=True))
+static_info = (spark.read.option("header", True).csv("/CSVs/static_inverter_info.csv", inferSchema=True))
+events = (spark.read.option("header", True).csv("/CSVs/sldc_events.csv", inferSchema=True))
+median_ref = (spark.read.option("header", True).csv("/CSVs/site_median_reference.csv", inferSchema=True))
 
 
 for df, cols in [(yields, ["ts_start","ts_end"]), (events, ["ts_start","ts_end"]), (median_ref, ["ts_start"])]:
