@@ -1,29 +1,9 @@
+from pyspark.sql import SparkSession, functions as F, types as T
 
-import os
-import sys
-from pyspark.sql import functions as F, types as T
-from pyspark.sql import SparkSession
+spark = SparkSession.builder.appName("SolarKPI").getOrCreate()
 
-# If executed on AWS Glue, these imports are available.
-try:
-    from awsglue.context import GlueContext
-    from awsglue.utils import getResolvedOptions
-    from pyspark.context import SparkContext
-    IS_GLUE = True
-except Exception:
-    IS_GLUE = False
-
-def get_spark():
-    if IS_GLUE:
-        sc = SparkContext.getOrCreate()
-        glue_ctx = GlueContext(sc)
-        spark = glue_ctx.spark_session
-        spark.conf.set("spark.sql.sources.partitionOverwriteMode", "dynamic")
-        spark.conf.set("spark.sql.shuffle.partitions", os.getenv("SPARK_SHUFFLE_PARTITIONS", "200"))
-        return spark
-    else:
-        spark = (SparkSession.builder
-                 .appName("SolarKPI-GlueCompatible")
-                 .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
-                 .getOrCreate())
-        return spark
+# 1) Lecture des CSV
+yields = (spark.read.option("header", True).csv("/path/inverter_yields.csv", inferSchema=True))
+static_info = (spark.read.option("header", True).csv("/path/static_inverter_info.csv", inferSchema=True))
+events = (spark.read.option("header", True).csv("/path/sldc_events.csv", inferSchema=True))
+median_ref = (spark.read.option("header", True).csv("/path/site_median_reference.csv", inferSchema=True))
