@@ -246,26 +246,31 @@ def run(
         lowest_dir: str,
         use_broadcast_events: bool = False,
 ) -> DataFrame:
+    # 1) Lécture des 4 jeux de données CSV
     iy_raw = read_csv(spark, inverter_yields_path)
     si_raw = read_csv(spark, static_inverter_info_path)
     ev_raw = read_csv(spark, sldc_events_path)
     sr_raw = read_csv(spark, site_median_reference_path)
 
     iy, si, ev, sr = prepare_inputs(iy_raw, si_raw, ev_raw, sr_raw)
-
+    # 2) Jointure de 4 dataframe
     df = join_static(iy, si)
     df = join_events(df, ev, use_broadcast=use_broadcast_events)
     df = join_site_reference(df, sr)
+    # 3) Calcule potential_production = specific_yield_ac × ac_max_power × 1/6 (10min en heures)
     df = compute_potential_production(df)
+    # 4) Conservation des inverters "Storage" qui sont "DC-Coupled"
     df = filter_storage_dc_coupled(df)
+    # 5) Production d'un fichier parquet partitionné par project_code et year_month
     df = add_year_month(df)
+
     df = select_final_columns(df)
 
     print("== KPI Solar df ==")
     df.show(10, truncate=False)
     write_parquet(df, out_dir, partition_by=["project_code", "year_month"])
 
-    # calcul "lowest n"
+    # Création d'une table triée des 5 sites avec la plus faible production totale
     low_df = lowest_sites(df, n=n_lowest)
 
     print("== Lowest sites ==")
