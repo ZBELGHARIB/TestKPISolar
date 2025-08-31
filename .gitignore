@@ -1,3 +1,21 @@
+# --- Données générées par la pipeline ---
+#data/out/**
+
+# --- Spark / Hadoop artefacts ---
+metastore_db/
+derby.log
+.sparkStaging/
+_Temporary/
+*/_temporary/
+*_SUCCESS
+*/_SUCCESS
+*_committed_*
+*/_committed_*
+*_started_*
+*/_started_*
+*.crc
+*._COPYING_*
+
 # --- OS ---
 .DS_Store
 Thumbs.db
@@ -61,11 +79,6 @@ _Temporary/
 *.zip
 *.tar
 *.tar.gz
-
-# --- Données générées par la pipeline ---
-data/out/**
-out_parquet/**
-lowest_5_sites_parquet/**
 
 # --- Fichiers sensibles (certificats/cles locales) ---
 *.pem
