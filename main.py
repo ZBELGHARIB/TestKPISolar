@@ -1,17 +1,28 @@
-# main.py
 from pyspark.sql import SparkSession, functions as F
 from pathlib import Path
-import os, argparse
+import os,sys
+
+try:
+    from awsglue.context import GlueContext        # Glue 3/4/5
+    from awsglue.utils import getResolvedOptions
+    from pyspark.context import SparkContext
+    IS_GLUE = True
+except Exception:
+    IS_GLUE = False
 
 def get_spark():
-    spark = (
-        SparkSession.builder
-        .appName("SolarKPI")
-        .master(os.getenv("SPARK_MASTER", "local[*]"))  # portable local/cluster
-        .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
-        .getOrCreate()
-    )
-    return spark
+    if IS_GLUE:
+        sc = SparkContext.getOrCreate()
+        glue = GlueContext(sc)
+        spark = glue.spark_session
+        spark.conf.set("spark.sql.sources.partitionOverwriteMode", "dynamic")
+        return spark
+    else:
+        return (SparkSession.builder
+                .appName("SolarKPI")
+                .master(os.getenv("SPARK_MASTER", "local[*]"))
+                .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
+                .getOrCreate())
 
 def ensure_local_dir(path: str):
     # Si on écrit sur un chemin local (file:/ ou chemin nu), on crée les dossiers parents
@@ -21,10 +32,23 @@ def ensure_local_dir(path: str):
     p.mkdir(parents=True, exist_ok=True)
 
 def parse_args():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--input-base",  default=os.getenv("INPUT_BASE", "CSVs"), help="dossier des CSV (local ou s3a://...)")
-    ap.add_argument("--output-base", default=os.getenv("OUTPUT_BASE", "output/solar_kpi"), help="dossier de sortie (local ou s3a://...)")
-    return ap.parse_args()
+    from argparse import ArgumentParser, Namespace
+    if IS_GLUE:
+        try:
+            opts = getResolvedOptions(sys.argv, ["INPUT_BASE","OUTPUT_BASE"])
+            return Namespace(input_base=opts["INPUT_BASE"].rstrip("/"),
+                             output_base=opts["OUTPUT_BASE"].rstrip("/"))
+        except SystemExit:
+            # fallback tolérant (facultatif)...
+            ...
+    else:
+        ap = ArgumentParser()
+        ap.add_argument("--input-base",  default=os.getenv("INPUT_BASE","CSVs"))
+        ap.add_argument("--output-base", default=os.getenv("OUTPUT_BASE","out/solar_kpi"))
+        a, _ = ap.parse_known_args()
+        return Namespace(input_base=a.input_base.rstrip("/"),
+                         output_base=a.output_base.rstrip("/"))
+
 
 def read_inputs(spark, base):
     # Chemins d’entrée (tu peux garder inferSchema=True si tes CSVs sont propres)
