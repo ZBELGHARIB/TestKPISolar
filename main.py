@@ -44,7 +44,7 @@ def parse_args():
     else:
         ap = ArgumentParser()
         ap.add_argument("--input-base",  default=os.getenv("INPUT_BASE","CSVs"))
-        ap.add_argument("--output-base", default=os.getenv("OUTPUT_BASE","out/solar_kpi"))
+        ap.add_argument("--output-base", default=os.getenv("OUTPUT_BASE","output/solar_kpi"))
         a, _ = ap.parse_known_args()
         return Namespace(input_base=a.input_base.rstrip("/"),
                          output_base=a.output_base.rstrip("/"))

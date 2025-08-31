@@ -1,0 +1,16 @@
+[
+  {"Name": "date", "Type": "date"},
+  {"Name": "logical_device_mrid", "Type": "string"},
+  {"Name": "ts_start", "Type": "timestamp"},
+  {"Name": "ts_end", "Type": "timestamp"},
+  {"Name": "logical_device_name", "Type": "string"},
+  {"Name": "project_mrid", "Type": "string"},
+  {"Name": "specific_yield_ac", "Type": "double"},
+  {"Name": "reference_yield_stc", "Type": "double"},
+  {"Name": "inverter_function_type", "Type": "string"},
+  {"Name": "storage_inverter_type", "Type": "string"},
+  {"Name": "ac_max_power", "Type": "int"},
+  {"Name": "iec63019_category_id", "Type": "int"},
+  {"Name": "site_median_specific_yield", "Type": "double"},
+  {"Name": "potential_production", "Type": "double"}
+]
