@@ -1,0 +1,77 @@
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.venv/
+venv/
+.env
+.env.*
+.envrc
+.python-version
+
+# --- Packaging / build ---
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# --- Tests / qualité ---
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+
+# --- Logs ---
+logs/
+*.log
+
+# --- IDE ---
+.idea/
+.vscode/
+*.iml
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+
+# --- Spark / Hadoop artefacts ---
+metastore_db/
+derby.log
+.sparkStaging/
+_Temporary/
+*/_temporary/
+*_SUCCESS
+*/_SUCCESS
+*_committed_*
+*/_committed_*
+*_started_*
+*/_started_*
+*.crc
+*._COPYING_*
+
+# --- JARs/bundles ---
+*.jar
+*.zip
+*.tar
+*.tar.gz
+
+# --- Données générées par la pipeline ---
+data/out/**
+out_parquet/**
+lowest_5_sites_parquet/**
+
+# --- Fichiers sensibles (certificats/cles locales) ---
+*.pem
+*.key
+*.crt
+*.der
+*.p12
+*.jks
+*.keystore
