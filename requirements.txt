@@ -1,1 +1,9 @@
 pyspark==3.5.1
+pytest>=7.0
+
+# Typing
+mypy>=1.10
+
+# Utilities & Formatting
+ref
+black>=24.0
