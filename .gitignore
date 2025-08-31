@@ -1,5 +1,5 @@
 # --- Données générées par la pipeline ---
-#data/out/**
+data/out/**
 
 # --- Spark / Hadoop artefacts ---
 metastore_db/
