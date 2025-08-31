@@ -1,8 +1,16 @@
 from __future__ import annotations
 import os
-import platform
+import logging
 from typing import Tuple, Optional, Union, Iterable, Dict
 from pyspark.sql import SparkSession, DataFrame, functions as F
+
+LOG_LEVEL = os.getenv("PY_LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=LOG_LEVEL,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+)
+
+logger = logging.getLogger("edf.pipeline")
 
 
 # --------------------------
@@ -41,13 +49,15 @@ def get_spark(
     spark = builder.getOrCreate()
     spark.sparkContext.setLogLevel(os.environ.get("SPARK_LOG_LEVEL", "WARN"))
 
+    logger.info("Spark %s (master=%s, appId=%s)",
+        spark.version, spark.sparkContext.master, spark.sparkContext.applicationId
+    )
+
     if extra_hadoop_conf:
         hconf = spark.sparkContext._jsc.hadoopConfiguration()
         for k, v in extra_hadoop_conf.items():
             hconf.set(k, v)
-
-    print("Spark version:", spark.version)
-
+        logger.debug("Applied extra Hadoop conf keys: %s", list(extra_hadoop_conf.keys()))
     return spark
 
 
@@ -247,6 +257,8 @@ def run(
         use_broadcast_events: bool = False,
 ) -> DataFrame:
     # 1) Lécture des 4 jeux de données CSV
+    logger.info("Reading inputs: %s, %s, %s, %s",
+                inverter_yields_path, static_inverter_info_path, sldc_events_path, site_median_reference_path)
     iy_raw = read_csv(spark, inverter_yields_path)
     si_raw = read_csv(spark, static_inverter_info_path)
     ev_raw = read_csv(spark, sldc_events_path)
@@ -254,10 +266,14 @@ def run(
 
     iy, si, ev, sr = prepare_inputs(iy_raw, si_raw, ev_raw, sr_raw)
     # 2) Jointure de 4 dataframe
+    logger.info("Joining static info...")
     df = join_static(iy, si)
+    logger.info("Joining events (broadcast=%s)...", use_broadcast_events)
     df = join_events(df, ev, use_broadcast=use_broadcast_events)
+    logger.info("Joining site reference (by project_code + ts_day)...")
     df = join_site_reference(df, sr)
     # 3) Calcule potential_production = specific_yield_ac × ac_max_power × 1/6 (10min en heures)
+    logger.info("Computing potential_production, filtering Storage/DC-Coupled, adding year_month...")
     df = compute_potential_production(df)
     # 4) Conservation des inverters "Storage" qui sont "DC-Coupled"
     df = filter_storage_dc_coupled(df)
@@ -266,16 +282,18 @@ def run(
 
     df = select_final_columns(df)
 
-    print("== KPI Solar df ==")
-    df.show(10, truncate=False)
+    logger.info("Writing KPI parquet to %s (partitioned by project_code,year_month)", out_dir)
     write_parquet(df, out_dir, partition_by=["project_code", "year_month"])
 
     # Création d'une table triée des 5 sites avec la plus faible production totale
     low_df = lowest_sites(df, n=n_lowest)
 
-    print("== Lowest sites ==")
-    low_df.show(10, truncate=False)
+    logger.info("Writing lowest %d sites to %s", n_lowest, lowest_dir)
     write_parquet(low_df, lowest_dir)
+
+    logger.info("Sample rows after processing:")
+    # df.show(10, truncate=False)
+    # low_df.show(10, truncate=False)
 
     return df
 
@@ -286,7 +304,7 @@ def run(
 
 if __name__ == "__main__":
     import argparse
-
+    logger.info("Job start ...")
     parser = argparse.ArgumentParser(description="Spark pipeline - test EDF")
     parser.add_argument("--inverter_yields", required=True)
     parser.add_argument("--static_inverter_info", required=True)
@@ -310,3 +328,4 @@ if __name__ == "__main__":
         n_lowest=args.n_lowest,
         lowest_dir=args.lowest_dir
     )
+    logger.info("Job end.")
